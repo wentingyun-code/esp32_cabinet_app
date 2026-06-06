@@ -9,9 +9,6 @@ workflows:
       xcode: latest
       vars:
         BUNDLE_ID: "com.example.esp32CabinetApp"
-      secure:
-        - APPLE_ID
-        - APPLE_ID_PASSWORD
 
     scripts:
       - name: Get Flutter packages
@@ -31,7 +28,6 @@ workflows:
           xcode-project use-profiles \
             --project ios/Runner.xcodeproj \
             --bundle-id "$BUNDLE_ID" \
-            --development-team "" \
             --code-signing-certificate "Apple Development" \
             --provisioning-profile-type "development"
 
