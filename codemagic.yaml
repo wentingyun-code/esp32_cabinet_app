@@ -18,10 +18,11 @@ workflows:
 
       - name: Create IPA from unsigned build
         script: |
-          mkdir -p /tmp/Payload
-          cp -r build/ios/iphoneos/Runner.app /tmp/Payload/
-          zip -r /tmp/app.ipa /tmp/Payload/
-          cp /tmp/app.ipa build/ios/app.ipa
+          cd build/ios/iphoneos
+          mkdir Payload
+          mv Runner.app Payload/
+          zip -r ../../../build/ios/app.ipa Payload/
+          mv Payload/Runner.app . && rmdir Payload
 
     artifacts:
       - build/ios/app.ipa
