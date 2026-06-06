@@ -1,14 +1,12 @@
 workflows:
   ios-workflow:
-    name: iOS Release
+    name: iOS Release (Unsigned)
     max_build_duration: 60
     instance_type: mac_mini_m2
 
     environment:
       flutter: 3.44.1
       xcode: latest
-      vars:
-        BUNDLE_ID: "com.example.esp32CabinetApp"
 
     scripts:
       - name: Get Flutter packages
@@ -23,21 +21,19 @@ workflows:
             echo "No Podfile found, skipping CocoaPods install"
           fi
 
-      - name: Set up code signing
+      - name: Build iOS without code signing
         script: |
-          xcode-project use-profiles \
-            --project ios/Runner.xcodeproj \
-            --bundle-id "$BUNDLE_ID" \
-            --code-signing-certificate "Apple Development" \
-            --provisioning-profile-type "development"
+          flutter build ios --release --no-codesign
 
-      - name: Build IPA
+      - name: Create IPA from unsigned build
         script: |
-          flutter build ipa --release \
-            --export-method development
+          mkdir -p /tmp/Payload
+          cp -r build/ios/iphoneos/Runner.app /tmp/Payload/
+          zip -r /tmp/app.ipa /tmp/Payload/
+          cp /tmp/app.ipa build/ios/app.ipa
 
     artifacts:
-      - build/ios/ipa/*.ipa
+      - build/ios/app.ipa
 
     publishing:
       email:
