@@ -7,16 +7,9 @@ workflows:
     environment:
       flutter: 3.44.1
       xcode: latest
-      vars:
-        APPLE_ID:
-          required: true
-        APPLE_ID_PASSWORD:
-          required: true
       ios_signing:
         distribution_type: development
         bundle_identifier: com.example.esp32CabinetApp
-        apple_id: $APPLE_ID
-        password: $APPLE_ID_PASSWORD
 
     scripts:
       - name: Get Flutter packages
