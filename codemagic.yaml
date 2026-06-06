@@ -9,12 +9,15 @@ workflows:
       xcode: latest
       vars:
         BUNDLE_ID: "com.example.esp32CabinetApp"
+      secure:
+        - APPLE_ID
+        - APPLE_ID_PASSWORD
 
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
 
-      - name: Install CocoaPods
+      - name: Install CocoaPods if needed
         script: |
           if [ -f ios/Podfile ]; then
             cd ios
@@ -22,6 +25,15 @@ workflows:
           else
             echo "No Podfile found, skipping CocoaPods install"
           fi
+
+      - name: Set up code signing
+        script: |
+          xcode-project use-profiles \
+            --project ios/Runner.xcodeproj \
+            --bundle-id "$BUNDLE_ID" \
+            --development-team "" \
+            --code-signing-certificate "Apple Development" \
+            --provisioning-profile-type "development"
 
       - name: Build IPA
         script: |
