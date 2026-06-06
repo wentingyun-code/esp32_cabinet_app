@@ -7,27 +7,26 @@ workflows:
     environment:
       flutter: 3.44.1
       xcode: latest
-      ios_signing:
-        distribution_type: development
-        bundle_identifier: com.example.esp32CabinetApp
 
     scripts:
       - name: Get Flutter packages
         script: flutter pub get
 
-      - name: Set up code signing
-        script: |
-          xcode-project use-profiles \
-            --project ios/Runner.xcodeproj
+      - name: Build iOS without code signing
+        script: flutter build ios --release --no-codesign
 
-      - name: Build IPA with code signing
+      - name: Create IPA
         script: |
-          xcode-project build-ipa \
-            --project ios/Runner.xcodeproj \
-            --scheme Runner
+          APP_PATH="build/ios/iphoneos/Runner.app"
+          IPA_PATH="build/ios/ipa"
+          mkdir -p "$IPA_PATH/Payload"
+          cp -r "$APP_PATH" "$IPA_PATH/Payload/"
+          cd "$IPA_PATH"
+          zip -r app.ipa Payload/
+          echo "IPA created at $IPA_PATH/app.ipa"
 
     artifacts:
-      - build/ios/ipa/*.ipa
+      - build/ios/ipa/app.ipa
 
     publishing:
       email:
