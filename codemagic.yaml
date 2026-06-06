@@ -12,15 +12,6 @@ workflows:
       - name: Get Flutter packages
         script: flutter pub get
 
-      - name: Install CocoaPods if needed
-        script: |
-          if [ -f ios/Podfile ]; then
-            cd ios
-            pod install
-          else
-            echo "No Podfile found, skipping CocoaPods install"
-          fi
-
       - name: Build iOS without code signing
         script: |
           flutter build ios --release --no-codesign
