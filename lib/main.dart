@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'models/cabinet_data.dart';
 import 'services/thingsboard_service.dart';
@@ -69,30 +67,19 @@ class _MyAppState extends State<MyApp> {
   }
 
   @override
-  void dispose() {
-    // 不在这里dispose MqttService，因为它的生命周期与AppRoot对齐
-    // 主题切换会重建MyApp，如果dispose会导致MQTT永久死亡
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final isIOS = Platform.isIOS || context.watch<CabinetData>().debugForceIOS;
     return MaterialApp(
       title: '环网柜监控系统',
       debugShowCheckedModeBanner: false,
-      theme: isIOS
-          ? ThemeData(
-              brightness: Brightness.light,
-              primaryColor: CupertinoColors.activeBlue,
-              scaffoldBackgroundColor: CupertinoColors.systemGroupedBackground,
-              useMaterial3: true,
-            )
-          : ThemeData(
-              primarySwatch: Colors.blue,
-              useMaterial3: true,
-              scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-            ),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+        cardTheme: CardThemeData(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
       home: MainNavigation(onRebuild: widget.onRebuild),
     );
   }
@@ -141,85 +128,54 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    final isIOS = Platform.isIOS || context.watch<CabinetData>().debugForceIOS;
-
-    if (isIOS) {
-      return CupertinoTabScaffold(
-        tabBar: CupertinoTabBar(
-          currentIndex: _currentIndex,
-          onTap: _onTabTapped,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.chart_bar),
-              label: '数据监控',
+    return Scaffold(
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          Navigator(
+            key: _navigatorKeys[0],
+            onGenerateRoute: (_) => MaterialPageRoute(
+              builder: (_) => _buildPage(0),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.gear),
-              label: '设备控制',
+          ),
+          Navigator(
+            key: _navigatorKeys[1],
+            onGenerateRoute: (_) => MaterialPageRoute(
+              builder: (_) => _buildPage(1),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.time),
-              label: '历史数据',
+          ),
+          Navigator(
+            key: _navigatorKeys[2],
+            onGenerateRoute: (_) => MaterialPageRoute(
+              builder: (_) => _buildPage(2),
             ),
-          ],
-        ),
-        tabBuilder: (context, index) {
-          return CupertinoTabView(
-            navigatorKey: _navigatorKeys[index],
-            builder: (_) => _buildPage(index),
-          );
-        },
-      );
-    } else {
-      return Scaffold(
-        body: IndexedStack(
-          index: _currentIndex,
-          children: [
-            Navigator(
-              key: _navigatorKeys[0],
-              onGenerateRoute: (_) => MaterialPageRoute(
-                builder: (_) => _buildPage(0),
-              ),
-            ),
-            Navigator(
-              key: _navigatorKeys[1],
-              onGenerateRoute: (_) => MaterialPageRoute(
-                builder: (_) => _buildPage(1),
-              ),
-            ),
-            Navigator(
-              key: _navigatorKeys[2],
-              onGenerateRoute: (_) => MaterialPageRoute(
-                builder: (_) => _buildPage(2),
-              ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: _onTabTapped,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: Colors.blue,
-          unselectedItemColor: Colors.grey,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard),
-              label: '数据监控',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_remote_outlined),
-              activeIcon: Icon(Icons.settings_remote),
-              label: '设备控制',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.history_outlined),
-              activeIcon: Icon(Icons.history),
-              label: '历史数据',
-            ),
-          ],
-        ),
-      );
-    }
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _onTabTapped,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: '数据监控',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_remote_outlined),
+            activeIcon: Icon(Icons.settings_remote),
+            label: '设备控制',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history_outlined),
+            activeIcon: Icon(Icons.history),
+            label: '历史数据',
+          ),
+        ],
+      ),
+    );
   }
 }

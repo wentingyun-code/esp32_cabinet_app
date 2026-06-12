@@ -123,7 +123,6 @@ class CabinetData extends ChangeNotifier {
   bool fanStatus = false;
   bool heaterStatus = false;
   bool dehumidifierStatus = false;
-  bool debugForceIOS = false;
   bool isConnected = false;
 
   // 用户手动覆盖标志：用户关闭自动模式后，轮询不再自动恢复
@@ -143,11 +142,6 @@ class CabinetData extends ChangeNotifier {
     final alpha = log(humidity / 100.0) + (a * temperature) / (b + temperature);
     final dp = (b * alpha) / (a - alpha);
     return dp.isNaN || dp.isInfinite ? 0.0 : dp;
-  }
-
-  void toggleDebugForceIOS() {
-    debugForceIOS = !debugForceIOS;
-    notifyListeners();
   }
 
   void updateConnectionStatus(bool connected) {
