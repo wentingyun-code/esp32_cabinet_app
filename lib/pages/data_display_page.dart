@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/cabinet_data.dart';
 import '../services/thingsboard_service.dart';
@@ -8,75 +7,12 @@ class DataDisplayPage extends StatelessWidget {
   final VoidCallback? onRebuild;
   const DataDisplayPage({super.key, this.onRebuild});
 
-  void _showConnectionError(BuildContext context) {
-    final mqttService = context.read<ThingsBoardService>();
-    final content = mqttService.lastErrorDetail.isNotEmpty
-        ? mqttService.lastErrorDetail
-        : '正在尝试连接...\n请稍后再试';
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('连接诊断'),
-        content: Text(content),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('知道了'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showExitDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('退出应用'),
-        content: const Text('确定要退出环网柜监控系统吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              SystemNavigator.pop();
-            },
-            child: const Text('退出', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Consumer<CabinetData>(
       builder: (context, data, child) {
         final mqttService = context.read<ThingsBoardService>();
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('环网柜实时监控'),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: Center(
-                  child: _ConnectionStatusWidget(
-                    isConnected: data.isConnected,
-                    errorInfo: data.isConnected ? null : mqttService.lastError,
-                    onTap: data.isConnected ? null : () => _showConnectionError(context),
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.exit_to_app),
-                onPressed: () => _showExitDialog(context),
-              ),
-            ],
-          ),
           body: RefreshIndicator(
             onRefresh: () async {
               await mqttService.connect();
@@ -364,68 +300,6 @@ class DataDisplayPage extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ConnectionStatusWidget extends StatelessWidget {
-  final bool isConnected;
-  final String? errorInfo;
-  final VoidCallback? onTap;
-
-  const _ConnectionStatusWidget({
-    required this.isConnected,
-    this.errorInfo,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bgColor = isConnected
-        ? Colors.green.withValues(alpha: 0.15)
-        : Colors.red.withValues(alpha: 0.15);
-    final dotColor = isConnected ? Colors.green : Colors.red;
-    final textColor = isConnected ? Colors.green : Colors.red;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: dotColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              isConnected ? '在线' : '离线',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
-            ),
-            if (!isConnected && errorInfo != null) ...[
-              const SizedBox(width: 4),
-              Icon(
-                Icons.info_outline,
-                size: 14,
-                color: textColor,
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }

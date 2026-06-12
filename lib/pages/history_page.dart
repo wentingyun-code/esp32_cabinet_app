@@ -9,9 +9,6 @@ class HistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('历史数据'),
-      ),
       body: Consumer<CabinetData>(
         builder: (context, data, child) {
           if (data.historyRecords.isEmpty) {

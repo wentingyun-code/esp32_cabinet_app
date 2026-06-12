@@ -1,0 +1,162 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="UTF-8">
+<style>
+body { font-family: '宋体', SimSun, serif; font-size: 12pt; line-height: 1.8; margin: 2cm; }
+h1 { font-size: 18pt; text-align: center; font-weight: bold; margin-top: 20pt; margin-bottom: 10pt; }
+h2 { font-size: 15pt; font-weight: bold; margin-top: 16pt; margin-bottom: 8pt; border-bottom: 1px solid #333; padding-bottom: 4pt; }
+h3 { font-size: 13pt; font-weight: bold; margin-top: 12pt; margin-bottom: 6pt; }
+table { border-collapse: collapse; width: 100%; margin: 8pt 0; }
+th, td { border: 1px solid #333; padding: 6pt 8pt; font-size: 11pt; vertical-align: top; }
+th { background-color: #4472C4; color: white; font-weight: bold; text-align: center; }
+tr:nth-child(even) { background-color: #F2F2F2; }
+.info-table th { background-color: #5B9BD5; }
+.risk-table th { background-color: #C00000; }
+.milestone-table th { background-color: #548235; }
+.code-table th { background-color: #7F6084; }
+</style>
+</head>
+<body>
+
+<h1>环网柜智能监控系统 — APP端开发进度报告</h1>
+
+<h2>项目信息</h2>
+<table class="info-table">
+<tr><th width="25%">项目</th><th width="75%">内容</th></tr>
+<tr><td>项目名称</td><td>环网柜智能监控系统（APP端）</td></tr>
+<tr><td>开发周期</td><td>2025年5月29日 — 2025年6月14日（共3周，每周3天）</td></tr>
+<tr><td>工作时间</td><td>每周四、五、六</td></tr>
+<tr><td>技术栈</td><td>Flutter + ThingsBoard REST API + JWT认证</td></tr>
+</table>
+
+<h2>第一周（5月29日 — 5月31日）：基础功能搭建</h2>
+
+<h3>5月29日（周四）— 项目初始化与连接建立</h3>
+<table>
+<tr><th width="60%">完成内容</th><th width="40%">说明</th></tr>
+<tr><td>Flutter项目创建与配置</td><td>初始化Flutter项目，配置Android/iOS双平台</td></tr>
+<tr><td>修复iOS/Android模式切换问题</td><td>解决切换到iOS模式后无法切回Android的问题</td></tr>
+<tr><td>实现MQTT连接ThingsBoard</td><td>使用mqtt_server_client库连接10.16.157.170:1883</td></tr>
+<tr><td>配置Android网络权限</td><td>AndroidManifest.xml添加INTERNET、ACCESS_NETWORK_STATE权限，usesCleartextTraffic=true</td></tr>
+<tr><td>配置iOS HTTP明文访问</td><td>Info.plist添加NSAppTransportSecurity + NSAllowsArbitraryLoads</td></tr>
+</table>
+
+<h3>5月30日（周五）— MQTT通信调试</h3>
+<table>
+<tr><th width="60%">完成内容</th><th width="40%">说明</th></tr>
+<tr><td>解决MQTT协议版本不匹配</td><td>ThingsBoard要求MQTT 3.1.1，APP发送的是3.1协议，修改MqttConnectMessage</td></tr>
+<tr><td>解决MQTT ClientID冲突</td><td>固定ClientID与ESP32冲突，改为动态唯一ID</td></tr>
+<tr><td>解决MQTT连接后立即断开</td><td>ProtocolName=MQIsdp问题，修正为MQTT 3.1.1协议</td></tr>
+<tr><td>修改服务器IP地址</td><td>更换为10.16.157.170，确认Docker端口映射(1883/9090)</td></tr>
+<tr><td>实现数据接收</td><td>成功接收ThingsBoard端遥测数据</td></tr>
+</table>
+
+<h3>5月31日（周六）— 数据解析与UI展示</h3>
+<table>
+<tr><th width="60%">完成内容</th><th width="40%">说明</th></tr>
+<tr><td>实现双通道JSON数据解析</td><td>支持List/Map/嵌套values多种JSON格式</td></tr>
+<tr><td>实现实时监控UI</td><td>温度、湿度、气压等传感器数据卡片展示</td></tr>
+<tr><td>实现APP端向服务器发送控制数据</td><td>MQTT发布控制消息</td></tr>
+<tr><td>添加连接状态指示</td><td>在线/离线状态显示</td></tr>
+<tr><td>添加退出功能</td><td>退出应用对话框</td></tr>
+</table>
+
+<h2>第二周（6月5日 — 6月7日）：架构重构与稳定性</h2>
+
+<h3>6月5日（周四）— REST API架构重构</h3>
+<table>
+<tr><th width="60%">完成内容</th><th width="40%">说明</th></tr>
+<tr><td>从MQTT直连重构为REST API架构</td><td>APP不再伪装成设备，避免与ESP32 Token冲突</td></tr>
+<tr><td>实现JWT登录认证</td><td>使用tenant@thingsboard.org获取JWT Token</td></tr>
+<tr><td>实现遥测数据定时轮询</td><td>3秒间隔轮询CLIENT_SCOPE属性</td></tr>
+<tr><td>实现属性写入</td><td>SERVER_SCOPE和SHARED_SCOPE属性写入</td></tr>
+<tr><td>移除timeseries写入</td><td>修复500错误（ThingsBoard版本API路径格式不对）</td></tr>
+</table>
+
+<h3>6月6日（周五）— 控制逻辑与稳定性修复</h3>
+<table>
+<tr><th width="60%">完成内容</th><th width="40%">说明</th></tr>
+<tr><td>修复手动模式下开关自动回弹</td><td>添加userOverrideAutoMode标志</td></tr>
+<tr><td>修复RPC超时阻塞UI</td><td>改为oneway RPC + 异步发送（不await）</td></tr>
+<tr><td>添加冷却期机制</td><td>8秒冷却期防止轮询覆盖乐观更新</td></tr>
+<tr><td>移除除湿器相关UI</td><td>ThingsBoard端没有除湿器设备</td></tr>
+<tr><td>修复UI Row溢出2.1px</td><td>用Flexible包裹Text</td></tr>
+</table>
+
+<h3>6月7日（周六）— 数据传输与scope优化</h3>
+<table>
+<tr><th width="60%">完成内容</th><th width="40%">说明</th></tr>
+<tr><td>解决APP操作状态不能传到ThingsBoard端</td><td>写入SHARED_SCOPE，ESP32可订阅接收</td></tr>
+<tr><td>冷却期从8秒延长到30秒</td><td>防止冷却期结束后轮询拉取旧值覆盖</td></tr>
+<tr><td>修复updateConnectionStatus重置userOverrideAutoMode</td><td>Token刷新/重连时不再重置手动模式标志</td></tr>
+<tr><td>实现分scope读写架构</td><td>传感器数据读CLIENT_SCOPE，控制状态读写SHARED_SCOPE</td></tr>
+<tr><td>优化弱网处理</td><td>超时5秒→10秒，失败降频3秒→10秒→30秒</td></tr>
+</table>
+
+<h2>第三周（6月12日 — 6月14日）：UI统一与iOS部署</h2>
+
+<h3>6月12日（周四）— UI统一重构</h3>
+<table>
+<tr><th width="60%">完成内容</th><th width="40%">说明</th></tr>
+<tr><td>移除iOS/Android双页面切换机制</td><td>删除debugForceIOS标志及切换逻辑</td></tr>
+<tr><td>统一使用Material风格导航</td><td>移除CupertinoTabScaffold，统一BottomNavigationBar</td></tr>
+<tr><td>统一数据监控页面布局</td><td>Card网格布局，移除iOS Settings风格列表</td></tr>
+<tr><td>统一对话框风格</td><td>全部使用Material AlertDialog</td></tr>
+<tr><td>代码量减少约40%</td><td>data_display_page.dart从750行→420行</td></tr>
+</table>
+
+<h3>6月13日（周五）— 天气模式适配与页面优化</h3>
+<table>
+<tr><th width="60%">完成内容</th><th width="40%">说明</th></tr>
+<tr><td>适配四种天气模式</td><td>SUNNY（晴天）、RAINY（雨天）、SNOW（雪天）、MEIYU（梅雨）</td></tr>
+<tr><td>天气卡片显示优化</td><td>对应图标、颜色、中文标签及描述</td></tr>
+<tr><td>统一控制页面风格</td><td>移除CupertinoAlertDialog分支，统一AlertDialog + Slider</td></tr>
+<tr><td>优化历史记录页面</td><td>显示温度/湿度/气压+时间+设备状态图标</td></tr>
+<tr><td>统一开关组件</td><td>iOS用CupertinoSwitch，Android用Switch（合理的平台适配）</td></tr>
+</table>
+
+<h3>6月14日（周六）— iOS端构建与部署</h3>
+<table>
+<tr><th width="60%">完成内容</th><th width="40%">说明</th></tr>
+<tr><td>配置CodeMagic云构建</td><td>codemagic.yaml自动化构建流程</td></tr>
+<tr><td>解决CocoaPods构建错误</td><td>移除无Podfile时的安装步骤</td></tr>
+<tr><td>解决IPA打包路径错误</td><td>修复zip打包导致IPA内部结构不标准</td></tr>
+<tr><td>解决代码签名问题</td><td>改为无签名构建，Sideloadly本地签名</td></tr>
+<tr><td>完成iOS IPA构建</td><td>成功构建并下载IPA文件</td></tr>
+</table>
+
+<h2>关键问题解决记录</h2>
+<table>
+<tr><th>问题</th><th>原因</th><th>解决方案</th><th width="12%">解决日期</th></tr>
+<tr><td>MQTT连接socket timeout</td><td>手机与服务器不在同一网络</td><td>确认网络配置，更换IP</td><td>5月30日</td></tr>
+<tr><td>MQTT协议版本不匹配</td><td>ThingsBoard要求3.1.1，APP发送3.1</td><td>修改MqttConnectMessage</td><td>5月30日</td></tr>
+<tr><td>APP与ESP32 Token冲突</td><td>共用Device Token导致互踢</td><td>架构重构为REST API + JWT</td><td>6月5日</td></tr>
+<tr><td>CLIENT_SCOPE 400错误</td><td>REST API不允许写入CLIENT_SCOPE</td><td>只写SERVER_SCOPE和SHARED_SCOPE</td><td>6月5日</td></tr>
+<tr><td>RPC超时阻塞UI</td><td>ESP32不支持RPC回复</td><td>oneway RPC + 异步发送</td><td>6月6日</td></tr>
+<tr><td>风扇按钮自动关闭</td><td>轮询拉取CLIENT_SCOPE旧值覆盖</td><td>分scope读写 + 冷却期30秒</td><td>6月7日</td></tr>
+<tr><td>IPA安装报Invalid file</td><td>zip打包路径错误</td><td>在正确目录内创建Payload打包</td><td>6月14日</td></tr>
+<tr><td>CodeMagic签名失败</td><td>免费Apple ID无profile</td><td>无签名构建 + Sideloadly签名</td><td>6月14日</td></tr>
+</table>
+
+<h2>风险项</h2>
+<table class="risk-table">
+<tr><th width="25%">风险</th><th width="8%">等级</th><th width="32%">说明</th><th width="35%">应对措施</th></tr>
+<tr><td>免费Apple ID签名7天过期</td><td>中</td><td>iOS APP每周需重签一次</td><td>每周Sideloadly重签，后续考虑$99/年开发者账号</td></tr>
+<tr><td>网络环境依赖</td><td>中</td><td>APP与ThingsBoard需在同一网络</td><td>弱网已做降频处理，添加连接诊断功能</td></tr>
+<tr><td>iOS真机部署无Mac</td><td>低</td><td>无法使用Xcode直接调试</td><td>依赖CodeMagic云构建 + Sideloadly签名</td></tr>
+</table>
+
+<h2>代码统计</h2>
+<table class="code-table">
+<tr><th>文件</th><th>改造前行数</th><th>改造后行数</th><th>变化</th></tr>
+<tr><td>main.dart</td><td>~300行</td><td>~150行</td><td>-50%</td></tr>
+<tr><td>data_display_page.dart</td><td>~750行</td><td>~420行</td><td>-44%</td></tr>
+<tr><td>control_page.dart</td><td>~360行</td><td>~280行</td><td>-22%</td></tr>
+<tr><td>history_page.dart</td><td>~55行</td><td>~103行</td><td>+87%（功能增强）</td></tr>
+<tr><td>thingsboard_service.dart</td><td>—</td><td>~400行</td><td>新增（替代mqtt_service）</td></tr>
+</table>
+
+</body>
+</html>

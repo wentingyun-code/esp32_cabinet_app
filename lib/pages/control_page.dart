@@ -172,7 +172,6 @@ class ControlPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('设备控制')),
       body: Consumer<CabinetData>(
         builder: (context, data, child) {
           bool isAutoMode = data.requestedMode == 'AUTO';
