@@ -125,10 +125,10 @@ class UserManagePage extends StatelessWidget {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
               final auth = context.read<AuthService>();
-              final err = auth.changeRole(user.username, newRole);
+              final err = await auth.changeRole(user.username, newRole);
               if (err != null && context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
               } else if (context.mounted) {
@@ -153,10 +153,10 @@ class UserManagePage extends StatelessWidget {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
               final auth = context.read<AuthService>();
-              final err = auth.deleteUser(user.username);
+              final err = await auth.deleteUser(user.username);
               if (err != null && context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
               } else if (context.mounted) {

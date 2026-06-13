@@ -46,21 +46,6 @@ class DataDisplayPage extends StatelessWidget {
                       Expanded(child: _buildMetricCard('露点温度', data.dewPoint.toStringAsFixed(1), '°C', Icons.ac_unit, Colors.indigo)),
                       const SizedBox(width: 8),
                       Expanded(child: _buildRiskCard('结露风险', data.condensationRisk)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _buildStatusCard('传感器', data.sensorPresent ? '在线' : '离线', data.sensorPresent)),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  // 户外环境
-                  _buildSectionTitle('户外环境模拟', Icons.wb_sunny, Colors.green),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(child: _buildMetricCard('户外温度', data.outdoorTemperature.toStringAsFixed(1), '°C', Icons.wb_sunny, Colors.orange)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _buildMetricCard('户外湿度', data.outdoorHumidity.toStringAsFixed(1), '%', Icons.cloud, Colors.lightBlue)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _buildMetricCard('户外气压', data.outdoorPressure.toStringAsFixed(0), 'hPa', Icons.air, Colors.cyan)),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -87,11 +72,17 @@ class DataDisplayPage extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
+                      Expanded(child: _buildDeviceCard('制冷器', data.coolerStatus, Icons.ac_unit, Colors.cyan)),
+                      const SizedBox(width: 8),
+                      Expanded(child: _buildDeviceCard('雾化器', data.atomizerStatus, Icons.water_drop, Colors.teal)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
                       Expanded(child: _buildMetricCard('目标温度', data.targetTemp.toStringAsFixed(1), '°C', Icons.track_changes, Colors.deepOrange)),
                       const SizedBox(width: 8),
                       Expanded(child: _buildMetricCard('目标湿度', data.targetHumidity.toStringAsFixed(1), '%', Icons.tune, Colors.deepPurple)),
-                      const SizedBox(width: 8),
-                      Expanded(child: SizedBox()),
                     ],
                   ),
                 ],
@@ -165,29 +156,6 @@ class DataDisplayPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(risk, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusCard(String label, String status, bool isOnline) {
-    final color = isOnline ? Colors.green : Colors.grey;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(isOnline ? Icons.sensors : Icons.sensors_off, color: color, size: 18),
-                const SizedBox(width: 4),
-                Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(status, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
           ],
         ),
       ),

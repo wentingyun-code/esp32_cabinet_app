@@ -38,10 +38,9 @@ class UserModel {
 }
 
 class AuthService extends ChangeNotifier {
-  static const _registeredUsersKey = 'registered_users';
-
-  // 5个预置管理员账号
-  static const List<UserModel> _defaultAdmins = [
+  UserModel? _currentUser;
+  // 预置管理员账号（不可删除）
+  final List<UserModel> _defaultAdmins = const [
     UserModel(username: 'admin1', password: 'admin1', role: UserRole.admin),
     UserModel(username: 'admin2', password: 'admin2', role: UserRole.admin),
     UserModel(username: 'admin3', password: 'admin3', role: UserRole.admin),
@@ -49,61 +48,57 @@ class AuthService extends ChangeNotifier {
     UserModel(username: 'admin5', password: 'admin5', role: UserRole.admin),
   ];
 
-  List<UserModel> _users = [];
-  UserModel? _currentUser;
+  late SharedPreferences _prefs;
+  List<UserModel> _registeredUsers = [];
 
   UserModel? get currentUser => _currentUser;
   bool get isLoggedIn => _currentUser != null;
   bool get isAdmin => _currentUser?.isAdmin ?? false;
 
   Future<void> init() async {
-    // 加载预置管理员
-    _users = List.from(_defaultAdmins);
-
-    // 从本地存储加载注册用户
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final usersJson = prefs.getStringList(_registeredUsersKey) ?? [];
-      for (final jsonStr in usersJson) {
-        final user = UserModel.fromJson(jsonStr);
-        // 避免与预置管理员重复
-        if (!_users.any((u) => u.username == user.username)) {
-          _users.add(user);
-        }
-      }
-    } catch (e) {
-      debugPrint('加载注册用户失败: $e');
-    }
-
+    _prefs = await SharedPreferences.getInstance();
+    _loadRegisteredUsers();
     notifyListeners();
   }
 
-  /// 保存注册用户到本地存储
+  void _loadRegisteredUsers() {
+    final jsonList = _prefs.getStringList('registered_users') ?? [];
+    _registeredUsers = jsonList
+        .map((json) => UserModel.fromJson(json))
+        .toList();
+  }
+
   Future<void> _saveRegisteredUsers() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      // 只保存非预置管理员的用户
-      final registeredUsers = _users
-          .where((u) => !_defaultAdmins.any((a) => a.username == u.username))
-          .map((u) => u.toJson())
-          .toList();
-      await prefs.setStringList(_registeredUsersKey, registeredUsers);
-    } catch (e) {
-      debugPrint('保存注册用户失败: $e');
-    }
+    final jsonList = _registeredUsers.map((u) => u.toJson()).toList();
+    await _prefs.setStringList('registered_users', jsonList);
   }
 
   bool login(String username, String password) {
-    try {
-      final user = _users.firstWhere(
-        (u) => u.username == username && u.password == password,
-      );
-      _currentUser = user;
+    // 检查预置管理员
+    final defaultAdmin = _defaultAdmins.firstWhere(
+      (u) => u.username == username && u.password == password,
+      orElse: () => const UserModel(username: '', password: '', role: UserRole.user),
+    );
+
+    if (defaultAdmin.username.isNotEmpty) {
+      _currentUser = defaultAdmin;
       notifyListeners();
       return true;
-    } catch (_) {
-      return false;
     }
+
+    // 检查注册用户
+    final registeredUser = _registeredUsers.firstWhere(
+      (u) => u.username == username && u.password == password,
+      orElse: () => const UserModel(username: '', password: '', role: UserRole.user),
+    );
+
+    if (registeredUser.username.isNotEmpty) {
+      _currentUser = registeredUser;
+      notifyListeners();
+      return true;
+    }
+
+    return false;
   }
 
   void logout() {
@@ -117,50 +112,70 @@ class AuthService extends ChangeNotifier {
     if (username.trim().length < 3) return '用户名至少3个字符';
     if (password.length < 4) return '密码至少4个字符';
 
-    final exists = _users.any((u) => u.username == username.trim());
-    if (exists) return '用户名已存在';
+    // 检查是否已存在（包括预置账号）
+    if (_defaultAdmins.any((u) => u.username == username)) {
+      return '用户名已存在';
+    }
+    if (_registeredUsers.any((u) => u.username == username)) {
+      return '用户名已存在';
+    }
 
-    final newUser = UserModel(
+    _registeredUsers.add(UserModel(
       username: username.trim(),
       password: password,
       role: role,
-    );
-    _users.add(newUser);
+    ));
     _saveRegisteredUsers();
     notifyListeners();
     return null;
   }
 
-  /// 获取所有用户列表
-  List<UserModel> get users => List.unmodifiable(_users);
+  /// 获取所有用户列表（预置管理员 + 注册用户）
+  List<UserModel> get users => [
+    ..._defaultAdmins,
+    ..._registeredUsers,
+  ];
 
   /// 修改用户角色，返回错误信息，null表示成功
-  String? changeRole(String username, UserRole newRole) {
-    final index = _users.indexWhere((u) => u.username == username);
+  Future<String?> changeRole(String username, UserRole newRole) async {
+    // 不能修改预置管理员角色
+    if (_defaultAdmins.any((u) => u.username == username)) {
+      return '不能修改预置管理员角色';
+    }
+
+    final index = _registeredUsers.indexWhere((u) => u.username == username);
     if (index == -1) return '用户不存在';
 
-    final old = _users[index];
-    _users[index] = UserModel(username: old.username, password: old.password, role: newRole);
+    _registeredUsers[index] = UserModel(
+      username: _registeredUsers[index].username,
+      password: _registeredUsers[index].password,
+      role: newRole,
+    );
+    await _saveRegisteredUsers();
 
     // 如果修改的是当前登录用户，更新当前用户引用
     if (_currentUser?.username == username) {
-      _currentUser = _users[index];
+      _currentUser = _registeredUsers[index];
     }
-    _saveRegisteredUsers();
+
     notifyListeners();
     return null;
   }
 
   /// 删除用户，返回错误信息，null表示成功
-  String? deleteUser(String username) {
+  Future<String?> deleteUser(String username) async {
     if (_currentUser?.username == username) return '不能删除当前登录用户';
-    final isDefault = _defaultAdmins.any((a) => a.username == username);
-    if (isDefault) return '不能删除预置管理员账号';
 
-    final index = _users.indexWhere((u) => u.username == username);
-    if (index == -1) return '用户不存在';
-    _users.removeAt(index);
-    _saveRegisteredUsers();
+    // 不能删除预置管理员
+    if (_defaultAdmins.any((u) => u.username == username)) {
+      return '不能删除预置管理员账号';
+    }
+
+    final beforeCount = _registeredUsers.length;
+    _registeredUsers.removeWhere((u) => u.username == username);
+    if (_registeredUsers.length == beforeCount) return '用户不存在';
+
+    await _saveRegisteredUsers();
     notifyListeners();
     return null;
   }

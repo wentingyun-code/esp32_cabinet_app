@@ -176,8 +176,40 @@ class ThingsBoardService {
           cabinetData.outdoorHumidity = _parseDouble(latestValue);
           updated = true;
           break;
-        case 'outdoor_pressure':
-          cabinetData.outdoorPressure = _parseDouble(latestValue);
+        case 'dew_point':
+          // dewPoint 是根据 temperature 和 humidity 计算得出的 getter，不可赋值
+          debugPrint('   遥测 dew_point: ${_parseDouble(latestValue)}°C (内部计算: ${cabinetData.dewPoint.toStringAsFixed(1)}°C)');
+          break;
+        case 'weather':
+          cabinetData.weather = (latestValue?.toString() ?? 'CLEAR').toUpperCase();
+          updated = true;
+          break;
+        case 'condensation_risk':
+          cabinetData.condensationRisk = (latestValue?.toString() ?? 'SAFE').toUpperCase();
+          updated = true;
+          break;
+        case 'active_mode':
+          cabinetData.activeMode = (latestValue?.toString() ?? 'COMFORT').toUpperCase();
+          updated = true;
+          break;
+        case 'fan_on':
+          cabinetData.fanStatus = _parseBool(latestValue);
+          updated = true;
+          break;
+        case 'heater_on':
+          cabinetData.heaterStatus = _parseBool(latestValue);
+          updated = true;
+          break;
+        case 'dehumidifier_on':
+          cabinetData.dehumidifierStatus = _parseBool(latestValue);
+          updated = true;
+          break;
+        case 'cooler_on':
+          cabinetData.coolerStatus = _parseBool(latestValue);
+          updated = true;
+          break;
+        case 'atomizer_on':
+          cabinetData.atomizerStatus = _parseBool(latestValue);
           updated = true;
           break;
       }
@@ -194,12 +226,13 @@ class ThingsBoardService {
   /// CLIENT_SCOPE属性：ESP32通过MQTT上报的设备状态（只读）
   static const List<String> _clientAttributeKeys = [
     'weather', 'condensation_risk', 'active_mode', 'sensor_present',
+    'fan_on', 'heater_on', 'dehumidifier_on', 'cooler_on', 'atomizer_on',
   ];
 
   /// SHARED_SCOPE属性：APP下发的控制命令（可读写，ESP32可订阅接收）
   static const List<String> _sharedAttributeKeys = [
-    'fan_on', 'heater_on', 'dehumidifier_on',
-    'requested_mode', 'target_temp', 'target_humidity',
+    'fan_on', 'heater_on', 'dehumidifier_on', 'cooler_on', 'atomizer_on',
+    'mode', 'target_temp', 'target_humidity',
   ];
 
   Future<void> _fetchClientAttributes() async {
@@ -284,6 +317,26 @@ class ThingsBoardService {
           cabinetData.sensorPresent = _parseBool(value);
           updated = true;
           break;
+        case 'fan_on':
+          cabinetData.fanStatus = _parseBool(value);
+          updated = true;
+          break;
+        case 'heater_on':
+          cabinetData.heaterStatus = _parseBool(value);
+          updated = true;
+          break;
+        case 'dehumidifier_on':
+          cabinetData.dehumidifierStatus = _parseBool(value);
+          updated = true;
+          break;
+        case 'cooler_on':
+          cabinetData.coolerStatus = _parseBool(value);
+          updated = true;
+          break;
+        case 'atomizer_on':
+          cabinetData.atomizerStatus = _parseBool(value);
+          updated = true;
+          break;
       }
     }
 
@@ -323,10 +376,18 @@ class ThingsBoardService {
           cabinetData.dehumidifierStatus = _parseBool(value);
           updated = true;
           break;
-        case 'requested_mode':
+        case 'cooler_on':
+          cabinetData.coolerStatus = _parseBool(value);
+          updated = true;
+          break;
+        case 'atomizer_on':
+          cabinetData.atomizerStatus = _parseBool(value);
+          updated = true;
+          break;
+        case 'mode':
           // 用户手动覆盖时，不允许轮询恢复自动模式
           if (cabinetData.userOverrideAutoMode) {
-            debugPrint('   🔒 requested_mode 被用户覆盖(Manual模式)，跳过更新 (服务器值: $value)');
+            debugPrint('   🔒 mode 被用户覆盖(Manual模式)，跳过更新 (服务器值: $value)');
             break;
           }
           cabinetData.requestedMode = (value?.toString() ?? 'AUTO').toUpperCase();
@@ -425,9 +486,9 @@ class ThingsBoardService {
   }
 
   Future<bool> publishModeChange(String mode) async {
-    _setCooldown('requested_mode');
+    _setCooldown('mode');
     // 先更新属性（确保ThingsBoard端可见），再异步发送RPC（不阻塞）
-    _updateDeviceAttributes({'requested_mode': mode});
+    _updateDeviceAttributes({'mode': mode});
     sendRpcCommand('setMode', {'mode': mode}); // 不await，异步发送
     return true;
   }
@@ -448,6 +509,16 @@ class ThingsBoardService {
         _setCooldown('dehumidifier_on');
         _updateDeviceAttributes({'dehumidifier_on': state});
         sendRpcCommand('setDehum', {'enabled': state}); // 不await
+        return true;
+      case 'cooler':
+        _setCooldown('cooler_on');
+        _updateDeviceAttributes({'cooler_on': state});
+        sendRpcCommand('setCooler', {'enabled': state}); // 不await
+        return true;
+      case 'atomizer':
+        _setCooldown('atomizer_on');
+        _updateDeviceAttributes({'atomizer_on': state});
+        sendRpcCommand('setAtomizer', {'enabled': state}); // 不await
         return true;
       default:
         return false;

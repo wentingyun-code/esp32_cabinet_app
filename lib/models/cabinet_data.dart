@@ -47,6 +47,8 @@ class HistoryRecord {
   final bool fanStatus;
   final bool heaterStatus;
   final bool dehumidifierStatus;
+  final bool coolerStatus;
+  final bool atomizerStatus;
 
   HistoryRecord({
     this.id,
@@ -65,6 +67,8 @@ class HistoryRecord {
     required this.fanStatus,
     required this.heaterStatus,
     required this.dehumidifierStatus,
+    this.coolerStatus = false,
+    this.atomizerStatus = false,
   });
 
   Map<String, dynamic> toMap() => {
@@ -84,6 +88,8 @@ class HistoryRecord {
         'fanStatus': fanStatus ? 1 : 0,
         'heaterStatus': heaterStatus ? 1 : 0,
         'dehumidifierStatus': dehumidifierStatus ? 1 : 0,
+        'coolerStatus': coolerStatus ? 1 : 0,
+        'atomizerStatus': atomizerStatus ? 1 : 0,
       };
 
   factory HistoryRecord.fromMap(Map<String, dynamic> map) => HistoryRecord(
@@ -103,6 +109,8 @@ class HistoryRecord {
         fanStatus: map['fanStatus'] == 1,
         heaterStatus: map['heaterStatus'] == 1,
         dehumidifierStatus: map['dehumidifierStatus'] == 1,
+        coolerStatus: (map['coolerStatus'] as int?) == 1,
+        atomizerStatus: (map['atomizerStatus'] as int?) == 1,
       );
 }
 
@@ -123,6 +131,8 @@ class CabinetData extends ChangeNotifier {
   bool fanStatus = false;
   bool heaterStatus = false;
   bool dehumidifierStatus = false;
+  bool coolerStatus = false;
+  bool atomizerStatus = false;
   bool isConnected = false;
 
   // 用户手动覆盖标志：用户关闭自动模式后，轮询不再自动恢复
@@ -288,8 +298,8 @@ class CabinetData extends ChangeNotifier {
           condensationRisk = (data['condensation_risk']?.toString() ?? 'SAFE').toUpperCase();
           debugPrint('   结露风险: $condensationRisk');
         }
-        if (data.containsKey('requested_mode')) {
-          requestedMode = (data['requested_mode']?.toString() ?? 'AUTO').toUpperCase();
+        if (data.containsKey('mode')) {
+          requestedMode = (data['mode']?.toString() ?? 'AUTO').toUpperCase();
           debugPrint('   请求模式: $requestedMode');
         }
         if (data.containsKey('active_mode')) {
@@ -319,6 +329,14 @@ class CabinetData extends ChangeNotifier {
         if (data.containsKey('dehumidifier_on')) {
           dehumidifierStatus = _parseBool(data['dehumidifier_on']);
           debugPrint('   除湿器状态: ${dehumidifierStatus ? "开启" : "关闭"}');
+        }
+        if (data.containsKey('cooler_on')) {
+          coolerStatus = _parseBool(data['cooler_on']);
+          debugPrint('   制冷器状态: ${coolerStatus ? "开启" : "关闭"}');
+        }
+        if (data.containsKey('atomizer_on')) {
+          atomizerStatus = _parseBool(data['atomizer_on']);
+          debugPrint('   雾化器状态: ${atomizerStatus ? "开启" : "关闭"}');
         }
 
         _checkAlert();
@@ -403,8 +421,8 @@ class CabinetData extends ChangeNotifier {
     try {
       final data = _parsePayload(payload);
       if (data.isNotEmpty) {
-        if (data.containsKey('requested_mode')) {
-          requestedMode = (data['requested_mode']?.toString() ?? 'AUTO').toUpperCase();
+        if (data.containsKey('mode')) {
+          requestedMode = (data['mode']?.toString() ?? 'AUTO').toUpperCase();
         }
         if (data.containsKey('active_mode')) {
           activeMode = (data['active_mode']?.toString() ?? 'COMFORT').toUpperCase();
@@ -428,6 +446,12 @@ class CabinetData extends ChangeNotifier {
         }
         if (data.containsKey('dehumidifier') || data.containsKey('dehumidifier_on')) {
           dehumidifierStatus = _parseBool(data['dehumidifier'] ?? data['dehumidifier_on']);
+        }
+        if (data.containsKey('cooler') || data.containsKey('cooler_on')) {
+          coolerStatus = _parseBool(data['cooler'] ?? data['cooler_on']);
+        }
+        if (data.containsKey('atomizer') || data.containsKey('atomizer_on')) {
+          atomizerStatus = _parseBool(data['atomizer'] ?? data['atomizer_on']);
         }
       }
       notifyListeners();
@@ -453,6 +477,8 @@ class CabinetData extends ChangeNotifier {
       fanStatus: fanStatus,
       heaterStatus: heaterStatus,
       dehumidifierStatus: dehumidifierStatus,
+      coolerStatus: coolerStatus,
+      atomizerStatus: atomizerStatus,
     );
     historyRecords.insert(0, record);
     if (historyRecords.length > 1000) {

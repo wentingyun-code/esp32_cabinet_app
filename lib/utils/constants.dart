@@ -1,6 +1,6 @@
 class Constants {
   // ThingsBoard REST API 配置
-  static const String tbServerUrl = 'http://10.16.157.170:9090';
+  static const String tbServerUrl = 'http://10.90.138.170:9090';
   static const String deviceId = 'f98a74d0-5c91-11f1-8d22-8379b3ee6be3';
 
   // ThingsBoard 登录凭据 (租户管理员)
@@ -19,13 +19,21 @@ class Constants {
     'outdoor_humidity',
     'outdoor_pressure',
     'dew_point',
+    'weather',
+    'condensation_risk',
+    'active_mode',
+    'fan_on',
+    'heater_on',
+    'dehumidifier_on',
+    'cooler_on',
+    'atomizer_on',
   ];
 
   // 属性数据字段 (attributes)
   static const List<String> attributeKeys = [
     'weather',
     'condensation_risk',
-    'requested_mode',
+    'mode',
     'active_mode',
     'target_temp',
     'target_humidity',
@@ -33,16 +41,20 @@ class Constants {
     'fan_on',
     'heater_on',
     'dehumidifier_on',
+    'cooler_on',
+    'atomizer_on',
   ];
 
   // RPC 方法名
   static const String rpcMethodSetFan = 'setFan';
   static const String rpcMethodSetHeater = 'setHeater';
   static const String rpcMethodSetDehum = 'setDehum';
+  static const String rpcMethodSetCooler = 'setCooler';
+  static const String rpcMethodSetAtomizer = 'setAtomizer';
 
   // 以下为旧MQTT配置，保留兼容
   static const List<String> mqttServers = [
-    '10.16.157.170',
+    '10.90.138.170',
   ];
   static const int mqttPort = 1883;
   static const String mqttUsername = 'f98a74d0-5c91-11f1-8d22-8379b3ee6be3';

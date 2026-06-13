@@ -256,6 +256,38 @@ class ControlPage extends StatelessWidget {
                   ),
                 ),
               ),
+              Card(
+                elevation: 4,
+                child: ListTile(
+                  title: const Text('制冷器'),
+                  subtitle: const Text('降温除湿'),
+                  trailing: _buildPlatformSwitch(
+                    value: data.coolerStatus,
+                    activeColor: isAutoMode ? Colors.grey : Colors.cyan,
+                    onChanged: isAutoMode ? null : (value) {
+                      data.coolerStatus = value;
+                      data.notifyDataChanged();
+                      context.read<ThingsBoardService>().publishControl('cooler', value);
+                    },
+                  ),
+                ),
+              ),
+              Card(
+                elevation: 4,
+                child: ListTile(
+                  title: const Text('雾化器'),
+                  subtitle: const Text('加湿防干燥'),
+                  trailing: _buildPlatformSwitch(
+                    value: data.atomizerStatus,
+                    activeColor: isAutoMode ? Colors.grey : Colors.teal,
+                    onChanged: isAutoMode ? null : (value) {
+                      data.atomizerStatus = value;
+                      data.notifyDataChanged();
+                      context.read<ThingsBoardService>().publishControl('atomizer', value);
+                    },
+                  ),
+                ),
+              ),
               const SizedBox(height: 20),
               // 报警配置
               Text('报警配置', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey[700])),

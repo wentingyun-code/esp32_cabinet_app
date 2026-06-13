@@ -240,7 +240,7 @@ class MqttService {
         
         if (keys.contains('weather') || keys.contains('condensation_risk')) {
           cabinetData.updateTelemetryStatus(payload);
-        } else if (keys.contains('requested_mode') || keys.contains('active_mode')) {
+        } else if (keys.contains('mode') || keys.contains('active_mode')) {
           cabinetData.updateMode(payload);
         } else {
           cabinetData.updateControlStatus(payload);
@@ -369,8 +369,8 @@ class MqttService {
       return;
     }
     final builder = MqttClientPayloadBuilder();
-    builder.addString('{"requested_mode": "$newMode"}');
-    debugPrint('📤 发送模式切换: requested_mode = $newMode');
+    builder.addString('{"mode": "$newMode"}');
+    debugPrint('📤 发送模式切换: mode = $newMode');
     _client!.publishMessage(Constants.topicAttributes, MqttQos.atLeastOnce, builder.payload!);
   }
 
