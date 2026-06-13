@@ -374,12 +374,9 @@ class ThingsBoardService {
         case 'atomizer_on':
           break;
         case 'mode':
-          // 用户手动覆盖时，不允许轮询恢复自动模式
-          if (cabinetData.userOverrideAutoMode) {
-            debugPrint('   🔒 mode 被用户覆盖(Manual模式)，跳过更新 (服务器值: $value)');
-            break;
-          }
           cabinetData.requestedMode = (value?.toString() ?? 'AUTO').toUpperCase();
+          // 同步更新userOverrideAutoMode
+          cabinetData.userOverrideAutoMode = (cabinetData.requestedMode == 'MANUAL');
           updated = true;
           break;
         case 'target_temp':
