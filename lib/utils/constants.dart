@@ -8,7 +8,8 @@ class Constants {
   static const String tbPassword = 'tenant';
 
   // 数据轮询间隔 (秒)
-  static const int pollIntervalSeconds = 3;
+  // ESP32每5秒上报一次，APP轮询1秒确保快速感知数据变化
+  static const int pollIntervalSeconds = 1;
 
   // 遥测数据字段 (timeseries)
   static const List<String> telemetryKeys = [

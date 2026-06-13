@@ -138,6 +138,10 @@ class CabinetData extends ChangeNotifier {
   // 用户手动覆盖标志：用户关闭自动模式后，轮询不再自动恢复
   bool userOverrideAutoMode = false;
 
+  // 设备状态冷却期：防止APP控制后被旧数据覆盖
+  final Map<String, DateTime> _cooldownFields = {};
+  static const Duration _cooldownDuration = Duration(seconds: 30);
+
   AlertConfig alertConfig = AlertConfig();
   String? alertMessage;
   String? alertType;
@@ -208,8 +212,35 @@ class CabinetData extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _batchUpdating = false;
+
+  void beginBatchUpdate() => _batchUpdating = true;
+
+  void endBatchUpdate() {
+    _batchUpdating = false;
+    checkAlerts();
+    notifyDataChanged();
+  }
+
   void notifyDataChanged() {
+    if (_batchUpdating) return;
     notifyListeners();
+  }
+
+  /// 设置字段冷却期
+  void setCooldown(String field) {
+    _cooldownFields[field] = DateTime.now().add(_cooldownDuration);
+  }
+
+  /// 检查字段是否在冷却期内
+  bool isInCooldown(String field) {
+    final cooldownEnd = _cooldownFields[field];
+    if (cooldownEnd == null) return false;
+    if (DateTime.now().isAfter(cooldownEnd)) {
+      _cooldownFields.remove(field);
+      return false;
+    }
+    return true;
   }
 
   void checkAlerts() {
@@ -318,6 +349,7 @@ class CabinetData extends ChangeNotifier {
           sensorPresent = _parseBool(data['sensor_present']);
           debugPrint('   传感器状态: ${sensorPresent ? "在线" : "离线"}');
         }
+        // 设备开关状态从ESP32上报的遥测数据读取
         if (data.containsKey('fan_on')) {
           fanStatus = _parseBool(data['fan_on']);
           debugPrint('   风扇状态: ${fanStatus ? "开启" : "关闭"}');
@@ -438,21 +470,8 @@ class CabinetData extends ChangeNotifier {
     try {
       final data = _parsePayload(payload);
       if (data.isNotEmpty) {
-        if (data.containsKey('fan') || data.containsKey('fan_on')) {
-          fanStatus = _parseBool(data['fan'] ?? data['fan_on']);
-        }
-        if (data.containsKey('heater') || data.containsKey('heater_on')) {
-          heaterStatus = _parseBool(data['heater'] ?? data['heater_on']);
-        }
-        if (data.containsKey('dehumidifier') || data.containsKey('dehumidifier_on')) {
-          dehumidifierStatus = _parseBool(data['dehumidifier'] ?? data['dehumidifier_on']);
-        }
-        if (data.containsKey('cooler') || data.containsKey('cooler_on')) {
-          coolerStatus = _parseBool(data['cooler'] ?? data['cooler_on']);
-        }
-        if (data.containsKey('atomizer') || data.containsKey('atomizer_on')) {
-          atomizerStatus = _parseBool(data['atomizer'] ?? data['atomizer_on']);
-        }
+        // SHARED_SCOPE推送的是目标状态，不更新设备开关（实际状态由CLIENT_SCOPE/遥测决定）
+        // 仅处理非设备状态字段
       }
       notifyListeners();
     } catch (e) {

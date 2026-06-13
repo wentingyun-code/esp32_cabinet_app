@@ -205,8 +205,15 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget build(BuildContext context) {
     final navKeys = _navigatorKeys;
     return Scaffold(
+      backgroundColor: const Color(0xFFE3F2FD),
       appBar: AppBar(
-        title: const Text('环网柜监控系统'),
+        backgroundColor: const Color(0xFF1565C0),
+        foregroundColor: Colors.white,
+        title: const Text(
+          '环网柜监控系统',
+          overflow: TextOverflow.visible,
+          softWrap: false,
+        ),
         actions: [
           Consumer<CabinetData>(
             builder: (_, data, __) => Container(
@@ -239,15 +246,6 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
           ),
           const SizedBox(width: 8),
-          Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: Center(
-              child: Text(
-                '${widget.username} (${widget.isAdmin ? "管理员" : "普通用户"})',
-                style: const TextStyle(fontSize: 13),
-              ),
-            ),
-          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: '退出登录',
@@ -286,7 +284,8 @@ class _MainNavigationState extends State<MainNavigation> {
         currentIndex: _currentIndex,
         onTap: _onTabTapped,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.blue,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFF1565C0),
         unselectedItemColor: Colors.grey,
         items: _navItems,
       ),

@@ -45,7 +45,12 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('注册')),
+      appBar: AppBar(
+        title: const Text('注册'),
+        backgroundColor: const Color(0xFF1565C0),
+        foregroundColor: Colors.white,
+      ),
+      backgroundColor: const Color(0xFFE3F2FD),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(

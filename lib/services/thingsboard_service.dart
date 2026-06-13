@@ -18,10 +18,6 @@ class ThingsBoardService {
   int _reconnectAttempts = 0;
   int _consecutiveFailures = 0; // 连续失败计数，用于降低轮询频率
 
-  // 冷却期：RPC发送后，某些字段在冷却期内不被轮询覆盖
-
-  final Map<String, DateTime> _cooldownFields = {};
-  static const Duration _cooldownDuration = Duration(seconds: 30);
 
   bool get isConnected => _isConnected;
 
@@ -107,12 +103,17 @@ class ThingsBoardService {
     }
 
     try {
-      // 串行请求，避免弱网环境下并行超时
-      await _fetchTelemetry();
-      await _fetchClientAttributes();
-      await _fetchSharedAttributes();
+      cabinetData.beginBatchUpdate();
+      // 并行请求三个数据源，提升响应速度
+      await Future.wait([
+        _fetchSharedAttributes(),
+        _fetchClientAttributes(),
+        _fetchTelemetry(),
+      ]);
     } catch (e) {
       debugPrint('❌ 数据拉取失败: $e');
+    } finally {
+      cabinetData.endBatchUpdate();
     }
   }
 
@@ -347,8 +348,9 @@ class ThingsBoardService {
     }
   }
 
-  /// 处理SHARED_SCOPE属性（APP下发，控制命令）
-  /// SHARED_SCOPE是APP写入的，不会与ESP32的CLIENT_SCOPE冲突
+  /// 处理SHARED_SCOPE属性（APP下发的控制命令）
+  /// SHARED_SCOPE是「目标状态」，设备状态应从CLIENT_SCOPE/遥测（实际状态）读取
+  /// 因此这里只处理 mode/target 等控制字段，不更新设备开关状态
   void _processSharedAttributes(List data) {
     bool updated = false;
 
@@ -357,32 +359,19 @@ class ThingsBoardService {
       final key = item['key']?.toString();
       final value = item['value'];
 
-      // 冷却期内的字段跳过，防止乐观更新被旧值覆盖
-      if (_isInCooldown(key ?? '')) {
+      // 冷却期内的字段跳过
+      if (cabinetData.isInCooldown(key ?? '')) {
         debugPrint('   ⏳ $key 在冷却期内，跳过更新 (SHARED_SCOPE)');
         continue;
       }
 
       switch (key) {
+        // 设备开关状态不从此处读取，由CLIENT_SCOPE/遥测决定实际状态
         case 'fan_on':
-          cabinetData.fanStatus = _parseBool(value);
-          updated = true;
-          break;
         case 'heater_on':
-          cabinetData.heaterStatus = _parseBool(value);
-          updated = true;
-          break;
         case 'dehumidifier_on':
-          cabinetData.dehumidifierStatus = _parseBool(value);
-          updated = true;
-          break;
         case 'cooler_on':
-          cabinetData.coolerStatus = _parseBool(value);
-          updated = true;
-          break;
         case 'atomizer_on':
-          cabinetData.atomizerStatus = _parseBool(value);
-          updated = true;
           break;
         case 'mode':
           // 用户手动覆盖时，不允许轮询恢复自动模式
@@ -409,22 +398,6 @@ class ThingsBoardService {
       cabinetData.notifyDataChanged();
       debugPrint('📋 SHARED_SCOPE属性已更新 (控制状态)');
     }
-  }
-
-  /// 检查字段是否在冷却期内
-  bool _isInCooldown(String field) {
-    final cooldownEnd = _cooldownFields[field];
-    if (cooldownEnd == null) return false;
-    if (DateTime.now().isAfter(cooldownEnd)) {
-      _cooldownFields.remove(field);
-      return false;
-    }
-    return true;
-  }
-
-  /// 设置字段冷却期
-  void _setCooldown(String field) {
-    _cooldownFields[field] = DateTime.now().add(_cooldownDuration);
   }
 
   Future<bool> sendRpcCommand(String method, Map<String, dynamic> params) async {
@@ -486,7 +459,7 @@ class ThingsBoardService {
   }
 
   Future<bool> publishModeChange(String mode) async {
-    _setCooldown('mode');
+    cabinetData.setCooldown('mode');
     // 先更新属性（确保ThingsBoard端可见），再异步发送RPC（不阻塞）
     _updateDeviceAttributes({'mode': mode});
     sendRpcCommand('setMode', {'mode': mode}); // 不await，异步发送
@@ -496,27 +469,27 @@ class ThingsBoardService {
   Future<bool> publishControl(String device, bool state) async {
     switch (device) {
       case 'fan':
-        _setCooldown('fan_on');
+        cabinetData.setCooldown('fan_on');
         _updateDeviceAttributes({'fan_on': state});
         sendRpcCommand('setFan', {'enabled': state}); // 不await
         return true;
       case 'heater':
-        _setCooldown('heater_on');
+        cabinetData.setCooldown('heater_on');
         _updateDeviceAttributes({'heater_on': state});
         sendRpcCommand('setHeater', {'enabled': state}); // 不await
         return true;
       case 'dehumidifier':
-        _setCooldown('dehumidifier_on');
+        cabinetData.setCooldown('dehumidifier_on');
         _updateDeviceAttributes({'dehumidifier_on': state});
         sendRpcCommand('setDehum', {'enabled': state}); // 不await
         return true;
       case 'cooler':
-        _setCooldown('cooler_on');
+        cabinetData.setCooldown('cooler_on');
         _updateDeviceAttributes({'cooler_on': state});
         sendRpcCommand('setCooler', {'enabled': state}); // 不await
         return true;
       case 'atomizer':
-        _setCooldown('atomizer_on');
+        cabinetData.setCooldown('atomizer_on');
         _updateDeviceAttributes({'atomizer_on': state});
         sendRpcCommand('setAtomizer', {'enabled': state}); // 不await
         return true;
@@ -526,14 +499,14 @@ class ThingsBoardService {
   }
 
   Future<bool> publishTargetTemp(double temp) async {
-    _setCooldown('target_temp');
+    cabinetData.setCooldown('target_temp');
     _updateDeviceAttributes({'target_temp': temp});
     sendRpcCommand('setTargetTemp', {'temperature': temp}); // 不await
     return true;
   }
 
   Future<bool> publishTargetHumidity(double humidity) async {
-    _setCooldown('target_humidity');
+    cabinetData.setCooldown('target_humidity');
     _updateDeviceAttributes({'target_humidity': humidity});
     sendRpcCommand('setTargetHumidity', {'humidity': humidity}); // 不await
     return true;

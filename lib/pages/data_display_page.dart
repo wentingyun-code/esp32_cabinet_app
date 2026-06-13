@@ -13,6 +13,7 @@ class DataDisplayPage extends StatelessWidget {
       builder: (context, data, child) {
         final mqttService = context.read<ThingsBoardService>();
         return Scaffold(
+          backgroundColor: const Color(0xFFE3F2FD),
           body: RefreshIndicator(
             onRefresh: () async {
               await mqttService.connect();
@@ -123,7 +124,7 @@ class DataDisplayPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                Flexible(child: Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87), overflow: TextOverflow.ellipsis)),
+                Flexible(child: Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87), overflow: TextOverflow.clip, softWrap: false)),
                 const SizedBox(width: 2),
                 Text(unit, style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ],

@@ -11,9 +11,16 @@ class UserManagePage extends StatelessWidget {
     final users = auth.users;
     final currentUsername = auth.currentUser?.username ?? '';
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: users.length,
+    return Scaffold(
+      backgroundColor: const Color(0xFFE3F2FD),
+      appBar: AppBar(
+        title: const Text('用户管理'),
+        backgroundColor: const Color(0xFF1565C0),
+        foregroundColor: Colors.white,
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: users.length,
       itemBuilder: (context, index) {
         final user = users[index];
         final isCurrentUser = user.username == currentUsername;
@@ -110,6 +117,7 @@ class UserManagePage extends StatelessWidget {
           ),
         );
       },
+      ),
     );
   }
 

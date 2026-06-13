@@ -184,10 +184,13 @@ class MqttService {
 
     _messageSubscription?.cancel();
     _messageSubscription = null;
-    
-    _client!.subscribe(Constants.topicTelemetry, MqttQos.atMostOnce);
+
+    // 订阅属性更新推送：ThingsBoard属性变化时实时推送给APP
     _client!.subscribe(Constants.topicAttributesSubscribe, MqttQos.atMostOnce);
+    // 订阅RPC请求
     _client!.subscribe(Constants.topicRpcSubscribe, MqttQos.atMostOnce);
+    // 订阅属性请求响应（用于主动获取最新属性）
+    _client!.subscribe('v1/devices/me/attributes/response/+', MqttQos.atMostOnce);
 
     _messageSubscription = _client!.updates?.listen((List<MqttReceivedMessage<MqttMessage?>>? messages) {
       if (messages == null || messages.isEmpty) return;
@@ -200,36 +203,33 @@ class MqttService {
         debugPrint('   Payload: $payload');
         debugPrint('═══════════════════════════════════════');
 
-        if (recMess.topic == Constants.topicTelemetry) {
-          _handleTelemetryMessage(payload);
-        } else if (recMess.topic.startsWith(Constants.topicRpcSubscribe.split('/+')[0])) {
+        if (recMess.topic.startsWith(Constants.topicRpcSubscribe.split('/+')[0])) {
           _handleRpcRequest(recMess.topic, payload);
+        } else if (recMess.topic.startsWith('v1/devices/me/attributes/response/')) {
+          _handleAttributeMessage(payload);
         } else {
           _handleAttributeMessage(payload);
         }
       }
     });
+
+    // 连接后立即主动请求一次最新属性（CLIENT_SCOPE + SHARED_SCOPE）
+    _requestAttributes();
   }
 
-  void _handleTelemetryMessage(String payload) {
-    try {
-      final data = json.decode(payload);
-      if (data is Map) {
-        final keys = data.keys.map((k) => k.toString()).toList();
-        
-        if (keys.contains('temperature') || keys.contains('humidity') || 
-            keys.contains('pressure') || keys.contains('outdoor_temperature')) {
-          cabinetData.updateTelemetryMetrics(payload);
-        } else if (keys.contains('weather') || keys.contains('condensation_risk') ||
-                   keys.contains('fan_on') || keys.contains('heater_on')) {
-          cabinetData.updateTelemetryStatus(payload);
-        } else {
-          cabinetData.updateSensorData(payload);
-        }
-      }
-    } catch (e) {
-      debugPrint('❌ 解析遥测数据失败: $e');
-    }
+  /// 主动请求最新属性，确保连接后立即同步数据
+  void _requestAttributes() {
+    if (_client == null || !_isConnected) return;
+    final requestId = DateTime.now().millisecondsSinceEpoch;
+    final topic = 'v1/devices/me/attributes/request/$requestId';
+    final payload = json.encode({
+      'clientKeys': 'weather,condensation_risk,active_mode,sensor_present',
+      'sharedKeys': 'mode,fan_on,heater_on,dehumidifier_on,cooler_on,atomizer_on,target_temp,target_humidity',
+    });
+    final builder = MqttClientPayloadBuilder();
+    builder.addString(payload);
+    _client!.publishMessage(topic, MqttQos.atMostOnce, builder.payload!);
+    debugPrint('📤 已发送属性请求: $topic');
   }
 
   void _handleAttributeMessage(String payload) {

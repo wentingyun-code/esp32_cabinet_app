@@ -46,9 +46,9 @@ class _LoginPageState extends State<LoginPage> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF2196F3), Color(0xFF64B5F6)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            colors: [Color(0xFF0D47A1), Color(0xFF2196F3)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
         ),
         child: Center(
@@ -64,6 +64,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // TODO: 替换为真实图标 Image.asset('assets/images/app_icon.png', width: 80, height: 80)
                     const Icon(Icons.sensors, size: 64, color: Color(0xFF2196F3)),
                     const SizedBox(height: 16),
                     const Text(
