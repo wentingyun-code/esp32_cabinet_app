@@ -107,7 +107,7 @@ class AuthService extends ChangeNotifier {
   }
 
   /// 注册新用户，返回错误信息，null表示成功
-  String? register(String username, String password, UserRole role) {
+  Future<String?> register(String username, String password, UserRole role) async {
     if (username.trim().isEmpty) return '用户名不能为空';
     if (username.trim().length < 3) return '用户名至少3个字符';
     if (password.length < 4) return '密码至少4个字符';
@@ -125,7 +125,7 @@ class AuthService extends ChangeNotifier {
       password: password,
       role: role,
     ));
-    _saveRegisteredUsers();
+    await _saveRegisteredUsers();
     notifyListeners();
     return null;
   }

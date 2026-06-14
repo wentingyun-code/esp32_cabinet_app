@@ -185,8 +185,12 @@ class ThingsBoardService {
           cabinetData.inComfortZone = _parseBool(latestValue);
           updated = true;
           break;
-        case 'target_weather':
-          cabinetData.targetWeather = (latestValue?.toString() ?? 'CLEAR').toUpperCase();
+        case 'current_weather':
+          cabinetData.currentWeather = (latestValue?.toString() ?? 'CLEAR').toUpperCase();
+          updated = true;
+          break;
+        case 'simulated_weather':
+          cabinetData.simulatedWeather = (latestValue?.toString() ?? 'CLEAR').toUpperCase();
           updated = true;
           break;
         case 'condensation_risk':
@@ -230,14 +234,14 @@ class ThingsBoardService {
 
   /// CLIENT_SCOPE属性：ESP32通过MQTT上报的设备状态（只读）
   static const List<String> _clientAttributeKeys = [
-    'in_comfort_zone', 'target_weather', 'condensation_risk', 'active_mode', 'sensor_present',
+    'current_weather', 'in_comfort_zone', 'simulated_weather', 'condensation_risk', 'active_mode', 'sensor_present',
     'fan_on', 'heater_on', 'dehumidifier_on', 'cooler_on', 'atomizer_on',
   ];
 
   /// SHARED_SCOPE属性：APP下发的控制命令（可读写，ESP32可订阅接收）
   static const List<String> _sharedAttributeKeys = [
     'fan_on', 'heater_on', 'dehumidifier_on', 'cooler_on', 'atomizer_on',
-    'mode', 'target_temp', 'target_humidity', 'target_weather',
+    'mode', 'target_temp', 'target_humidity', 'simulated_weather',
   ];
 
   Future<void> _fetchClientAttributes() async {
@@ -310,8 +314,12 @@ class ThingsBoardService {
           cabinetData.inComfortZone = _parseBool(value);
           updated = true;
           break;
-        case 'target_weather':
-          cabinetData.targetWeather = (value?.toString() ?? 'CLEAR').toUpperCase();
+        case 'current_weather':
+          cabinetData.currentWeather = (value?.toString() ?? 'CLEAR').toUpperCase();
+          updated = true;
+          break;
+        case 'simulated_weather':
+          cabinetData.simulatedWeather = (value?.toString() ?? 'CLEAR').toUpperCase();
           updated = true;
           break;
         case 'condensation_risk':
@@ -395,8 +403,8 @@ class ThingsBoardService {
           cabinetData.targetHumidity = _parseDouble(value);
           updated = true;
           break;
-        case 'target_weather':
-          cabinetData.targetWeather = (value?.toString() ?? 'CLEAR').toUpperCase();
+        case 'simulated_weather':
+          cabinetData.simulatedWeather = (value?.toString() ?? 'CLEAR').toUpperCase();
           updated = true;
           break;
       }

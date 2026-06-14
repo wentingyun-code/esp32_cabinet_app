@@ -15,7 +15,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _confirmCtrl = TextEditingController();
   String? _error;
 
-  void _register() {
+  Future<void> _register() async {
     setState(() => _error = null);
 
     final username = _usernameCtrl.text.trim();
@@ -29,7 +29,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
     final auth = context.read<AuthService>();
     // 注册默认为普通用户
-    final err = auth.register(username, password, UserRole.user);
+    final err = await auth.register(username, password, UserRole.user);
+    if (!mounted) return;
     if (err != null) {
       setState(() => _error = err);
       return;

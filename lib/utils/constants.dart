@@ -20,8 +20,9 @@ class Constants {
     'outdoor_humidity',
     'outdoor_pressure',
     'dew_point',
+    'current_weather',
     'in_comfort_zone',
-    'target_weather',
+    'simulated_weather',
     'condensation_risk',
     'active_mode',
     'fan_on',
@@ -33,8 +34,9 @@ class Constants {
 
   // 属性数据字段 (attributes)
   static const List<String> attributeKeys = [
+    'current_weather',
     'in_comfort_zone',
-    'target_weather',
+    'simulated_weather',
     'condensation_risk',
     'mode',
     'active_mode',

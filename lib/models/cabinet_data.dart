@@ -129,7 +129,8 @@ class CabinetData extends ChangeNotifier {
   double outdoorTemperature = 0.0;
   double outdoorHumidity = 0.0;
   double outdoorPressure = 1013.25;
-  String targetWeather = 'CLEAR';
+  String currentWeather = 'CLEAR';
+  String simulatedWeather = 'CLEAR';
   bool inComfortZone = false;
   String condensationRisk = 'SAFE';
   String requestedMode = 'AUTO';
@@ -336,9 +337,13 @@ class CabinetData extends ChangeNotifier {
       debugPrint('   原始数据: $data');
 
       if (data.isNotEmpty) {
-        if (data.containsKey('target_weather')) {
-          targetWeather = (data['target_weather']?.toString() ?? 'CLEAR').toUpperCase();
-          debugPrint('   目标天气: $targetWeather');
+        if (data.containsKey('current_weather')) {
+          currentWeather = (data['current_weather']?.toString() ?? 'CLEAR').toUpperCase();
+          debugPrint('   当前天气: $currentWeather');
+        }
+        if (data.containsKey('simulated_weather')) {
+          simulatedWeather = (data['simulated_weather']?.toString() ?? 'CLEAR').toUpperCase();
+          debugPrint('   模拟天气: $simulatedWeather');
         }
         if (data.containsKey('in_comfort_zone')) {
           inComfortZone = _parseBool(data['in_comfort_zone']);
@@ -503,7 +508,7 @@ class CabinetData extends ChangeNotifier {
       outdoorTemperature: outdoorTemperature,
       outdoorHumidity: outdoorHumidity,
       outdoorPressure: outdoorPressure,
-      weather: targetWeather,
+      weather: currentWeather,
       condensationRisk: condensationRisk,
       mode: requestedMode,
       activeMode: activeMode,

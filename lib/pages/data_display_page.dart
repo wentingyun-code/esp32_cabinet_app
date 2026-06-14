@@ -49,8 +49,14 @@ class DataDisplayPage extends StatelessWidget {
                     children: [
                       Expanded(child: _buildComfortZoneCard(data.inComfortZone)),
                       const SizedBox(width: 8),
-                      Expanded(child: _buildWeatherCard('目标天气', data.targetWeather)),
+                      Expanded(child: _buildWeatherCard('当前天气', data.currentWeather)),
                       const SizedBox(width: 8),
+                      Expanded(child: _buildWeatherCard('模拟天气', data.simulatedWeather)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
                       Expanded(child: _buildModeCard('请求模式', data.requestedMode)),
                     ],
                   ),
@@ -150,11 +156,11 @@ class DataDisplayPage extends StatelessWidget {
 
   Widget _buildWeatherCard(String label, String weather) {
     final weatherInfo = {
-      'SUNNY':  {'icon': Icons.wb_sunny,              'color': Colors.amber,      'label': '晴天', 'desc': '高温低湿'},
-      'RAINY':  {'icon': Icons.grain,                  'color': Colors.blueGrey,   'label': '雨天', 'desc': '中温高湿'},
-      'SNOW':   {'icon': Icons.ac_unit,                'color': Colors.lightBlue,  'label': '雪天', 'desc': '低温环境'},
+      'SUNNY':  {'icon': Icons.wb_sunny,              'color': Colors.amber,      'label': '高温', 'desc': '高温低湿'},
+      'RAINY':  {'icon': Icons.grain,                  'color': Colors.blueGrey,   'label': '暴雨', 'desc': '中温高湿'},
+      'SNOW':   {'icon': Icons.ac_unit,                'color': Colors.lightBlue,  'label': '低温', 'desc': '低温环境'},
       'MEIYU':  {'icon': Icons.water_drop,             'color': Colors.purple,     'label': '梅雨', 'desc': '高温高湿'},
-      'CLEAR':  {'icon': Icons.wb_sunny,               'color': Colors.amber,      'label': '晴天', 'desc': ''},
+      'CLEAR':  {'icon': Icons.wb_sunny,               'color': Colors.amber,      'label': '高温', 'desc': ''},
     };
     final info = weatherInfo[weather] ?? {'icon': Icons.cloud, 'color': Colors.grey, 'label': weather, 'desc': ''};
     return Card(

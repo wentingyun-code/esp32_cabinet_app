@@ -223,8 +223,8 @@ class MqttService {
     final requestId = DateTime.now().millisecondsSinceEpoch;
     final topic = 'v1/devices/me/attributes/request/$requestId';
     final payload = json.encode({
-      'clientKeys': 'in_comfort_zone,target_weather,condensation_risk,active_mode,sensor_present',
-      'sharedKeys': 'mode,fan_on,heater_on,dehumidifier_on,cooler_on,atomizer_on,target_temp,target_humidity,target_weather',
+      'clientKeys': 'current_weather,in_comfort_zone,simulated_weather,condensation_risk,active_mode,sensor_present',
+      'sharedKeys': 'mode,fan_on,heater_on,dehumidifier_on,cooler_on,atomizer_on,target_temp,target_humidity,simulated_weather',
     });
     final builder = MqttClientPayloadBuilder();
     builder.addString(payload);

@@ -436,17 +436,17 @@ class HistoryPage extends StatelessWidget {
     switch (weather.toUpperCase()) {
       case 'SUNNY':
       case 'CLEAR':
-        return _WeatherInfo(Icons.wb_sunny, '晴天', const Color(0xFFFFB74D));
+        return _WeatherInfo(Icons.wb_sunny, '高温', const Color(0xFFFFB74D));
       case 'RAINY':
-        return _WeatherInfo(Icons.water_drop, '雨天', const Color(0xFF4FC3F7));
+        return _WeatherInfo(Icons.water_drop, '暴雨', const Color(0xFF4FC3F7));
       case 'SNOW':
-        return _WeatherInfo(Icons.ac_unit, '雪天', const Color(0xFFB0BEC5));
+        return _WeatherInfo(Icons.ac_unit, '低温', const Color(0xFFB0BEC5));
       case 'MEIYU':
         return _WeatherInfo(Icons.cloud, '梅雨', const Color(0xFF90A4AE));
       case 'CLOUDY':
         return _WeatherInfo(Icons.cloud, '多云', const Color(0xFF90A4AE));
       default:
-        return _WeatherInfo(Icons.wb_sunny, '晴天', const Color(0xFFFFB74D));
+        return _WeatherInfo(Icons.wb_sunny, '高温', const Color(0xFFFFB74D));
     }
   }
 
