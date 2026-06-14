@@ -131,7 +131,6 @@ class CabinetData extends ChangeNotifier {
   double outdoorPressure = 1013.25;
   String currentWeather = 'CLEAR';
   String simulatedWeather = 'CLEAR';
-  bool inComfortZone = false;
   String condensationRisk = 'SAFE';
   String requestedMode = 'AUTO';
   String activeMode = 'COMFORT';
@@ -345,10 +344,6 @@ class CabinetData extends ChangeNotifier {
           simulatedWeather = (data['simulated_weather']?.toString() ?? 'CLEAR').toUpperCase();
           debugPrint('   模拟天气: $simulatedWeather');
         }
-        if (data.containsKey('in_comfort_zone')) {
-          inComfortZone = _parseBool(data['in_comfort_zone']);
-          debugPrint('   舒适区: ${inComfortZone ? "是" : "否"}');
-        }
         if (data.containsKey('condensation_risk')) {
           condensationRisk = (data['condensation_risk']?.toString() ?? 'SAFE').toUpperCase();
           debugPrint('   结露风险: $condensationRisk');
@@ -412,7 +407,7 @@ class CabinetData extends ChangeNotifier {
       if (data.isNotEmpty) {
         if (data.containsKey('temperature') || data.containsKey('temp')) {
           updateTelemetryMetrics(payload);
-        } else if (data.containsKey('in_comfort_zone') || data.containsKey('condensation_risk')) {
+        } else if (data.containsKey('condensation_risk')) {
           updateTelemetryStatus(payload);
         } else {
           double newTemp = temperature;

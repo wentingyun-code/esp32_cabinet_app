@@ -181,10 +181,6 @@ class ThingsBoardService {
           // dewPoint 是根据 temperature 和 humidity 计算得出的 getter，不可赋值
           debugPrint('   遥测 dew_point: ${_parseDouble(latestValue)}°C (内部计算: ${cabinetData.dewPoint.toStringAsFixed(1)}°C)');
           break;
-        case 'in_comfort_zone':
-          cabinetData.inComfortZone = _parseBool(latestValue);
-          updated = true;
-          break;
         case 'current_weather':
           cabinetData.currentWeather = (latestValue?.toString() ?? 'CLEAR').toUpperCase();
           updated = true;
@@ -234,7 +230,7 @@ class ThingsBoardService {
 
   /// CLIENT_SCOPE属性：ESP32通过MQTT上报的设备状态（只读）
   static const List<String> _clientAttributeKeys = [
-    'current_weather', 'in_comfort_zone', 'simulated_weather', 'condensation_risk', 'active_mode', 'sensor_present',
+    'current_weather', 'simulated_weather', 'condensation_risk', 'active_mode', 'sensor_present',
     'fan_on', 'heater_on', 'dehumidifier_on', 'cooler_on', 'atomizer_on',
   ];
 
@@ -310,10 +306,6 @@ class ThingsBoardService {
       final value = item['value'];
 
       switch (key) {
-        case 'in_comfort_zone':
-          cabinetData.inComfortZone = _parseBool(value);
-          updated = true;
-          break;
         case 'current_weather':
           cabinetData.currentWeather = (value?.toString() ?? 'CLEAR').toUpperCase();
           updated = true;

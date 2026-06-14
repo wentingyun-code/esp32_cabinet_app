@@ -47,16 +47,10 @@ class DataDisplayPage extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Expanded(child: _buildComfortZoneCard(data.inComfortZone)),
-                      const SizedBox(width: 8),
                       Expanded(child: _buildWeatherCard('当前天气', data.currentWeather)),
                       const SizedBox(width: 8),
                       Expanded(child: _buildWeatherCard('模拟天气', data.simulatedWeather)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
+                      const SizedBox(width: 8),
                       Expanded(child: _buildModeCard('请求模式', data.requestedMode)),
                     ],
                   ),
@@ -120,34 +114,6 @@ class DataDisplayPage extends StatelessWidget {
                 Text(unit, style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildComfortZoneCard(bool inComfortZone) {
-    final color = inComfortZone ? Colors.green : Colors.red;
-    final icon = inComfortZone ? Icons.check_circle : Icons.warning;
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: color.withValues(alpha: 0.5), width: 2),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: color, size: 18),
-                const SizedBox(width: 4),
-                Text('舒适区', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(inComfortZone ? '在舒适区' : '不在舒适区', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
           ],
         ),
       ),
