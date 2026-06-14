@@ -41,25 +41,17 @@ class DataDisplayPage extends StatelessWidget {
                       Expanded(child: _buildMetricCard('柜内气压', data.pressure.toStringAsFixed(0), 'hPa', Icons.speed, Colors.teal)),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(child: _buildMetricCard('露点温度', data.dewPoint.toStringAsFixed(1), '°C', Icons.ac_unit, Colors.indigo)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _buildRiskCard('结露风险', data.condensationRisk)),
-                    ],
-                  ),
                   const SizedBox(height: 20),
                   // 通道B: 设备运行状态
                   _buildSectionTitle('通道B · 设备运行状态', Icons.settings_remote, Colors.purple),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Expanded(child: _buildWeatherCard(data.weather)),
+                      Expanded(child: _buildComfortZoneCard(data.inComfortZone)),
+                      const SizedBox(width: 8),
+                      Expanded(child: _buildWeatherCard('目标天气', data.targetWeather)),
                       const SizedBox(width: 8),
                       Expanded(child: _buildModeCard('请求模式', data.requestedMode)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _buildModeCard('激活模式', data.activeMode)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -78,14 +70,7 @@ class DataDisplayPage extends StatelessWidget {
                       Expanded(child: _buildDeviceCard('雾化器', data.atomizerStatus, Icons.water_drop, Colors.teal)),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(child: _buildMetricCard('目标温度', data.targetTemp.toStringAsFixed(1), '°C', Icons.track_changes, Colors.deepOrange)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _buildMetricCard('目标湿度', data.targetHumidity.toStringAsFixed(1), '%', Icons.tune, Colors.deepPurple)),
-                    ],
-                  ),
+
                 ],
               ),
             ),
@@ -135,13 +120,13 @@ class DataDisplayPage extends StatelessWidget {
     );
   }
 
-  Widget _buildRiskCard(String label, String risk) {
-    final isHigh = risk == 'HIGH';
-    final color = isHigh ? Colors.red : Colors.green;
+  Widget _buildComfortZoneCard(bool inComfortZone) {
+    final color = inComfortZone ? Colors.green : Colors.red;
+    final icon = inComfortZone ? Icons.check_circle : Icons.warning;
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: isHigh ? BorderSide(color: Colors.red.withValues(alpha: 0.5), width: 2) : BorderSide.none,
+        side: BorderSide(color: color.withValues(alpha: 0.5), width: 2),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -150,20 +135,20 @@ class DataDisplayPage extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(isHigh ? Icons.warning : Icons.check_circle, color: color, size: 18),
+                Icon(icon, color: color, size: 18),
                 const SizedBox(width: 4),
-                Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                Text('舒适区', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
               ],
             ),
             const SizedBox(height: 8),
-            Text(risk, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+            Text(inComfortZone ? '在舒适区' : '不在舒适区', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWeatherCard(String weather) {
+  Widget _buildWeatherCard(String label, String weather) {
     final weatherInfo = {
       'SUNNY':  {'icon': Icons.wb_sunny,              'color': Colors.amber,      'label': '晴天', 'desc': '高温低湿'},
       'RAINY':  {'icon': Icons.grain,                  'color': Colors.blueGrey,   'label': '雨天', 'desc': '中温高湿'},
@@ -182,7 +167,7 @@ class DataDisplayPage extends StatelessWidget {
               children: [
                 Icon(info['icon'] as IconData, color: info['color'] as Color, size: 18),
                 const SizedBox(width: 4),
-                Text('天气模式', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
               ],
             ),
             const SizedBox(height: 8),
@@ -250,22 +235,50 @@ class DataDisplayPage extends StatelessWidget {
   }
 
   Widget _buildAlertBanner(CabinetData data) {
-    final isDew = data.alertType == 'dew';
+    final type = data.alertType;
+    final isDew = type == 'dew';
+    final isTempLow = type == 'temp_low';
+    final isTempHigh = type == 'temp_high';
+    final isHumidityLow = type == 'humidity_low';
+    final isHumidityHigh = type == 'humidity_high';
+
+    Color bannerColor;
+    IconData bannerIcon;
+    if (isDew) {
+      bannerColor = Colors.orange;
+      bannerIcon = Icons.water_drop;
+    } else if (isTempLow) {
+      bannerColor = Colors.blue;
+      bannerIcon = Icons.ac_unit;
+    } else if (isTempHigh) {
+      bannerColor = Colors.red;
+      bannerIcon = Icons.thermostat;
+    } else if (isHumidityLow) {
+      bannerColor = Colors.amber;
+      bannerIcon = Icons.water_drop_outlined;
+    } else if (isHumidityHigh) {
+      bannerColor = Colors.deepOrange;
+      bannerIcon = Icons.water_drop;
+    } else {
+      bannerColor = Colors.red;
+      bannerIcon = Icons.warning_amber;
+    }
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDew ? Colors.orange.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+        color: bannerColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isDew ? Colors.orange : Colors.red, width: 1.5),
+        border: Border.all(color: bannerColor, width: 1.5),
       ),
       child: Row(
         children: [
-          Icon(isDew ? Icons.water_drop : Icons.warning_amber, color: isDew ? Colors.orange : Colors.red, size: 28),
+          Icon(bannerIcon, color: bannerColor, size: 28),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               data.alertMessage ?? '',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: isDew ? Colors.orange[800] : Colors.red[800]),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: bannerColor.withValues(alpha: 1.0)),
             ),
           ),
         ],

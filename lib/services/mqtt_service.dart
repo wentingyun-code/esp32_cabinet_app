@@ -223,8 +223,8 @@ class MqttService {
     final requestId = DateTime.now().millisecondsSinceEpoch;
     final topic = 'v1/devices/me/attributes/request/$requestId';
     final payload = json.encode({
-      'clientKeys': 'weather,condensation_risk,active_mode,sensor_present',
-      'sharedKeys': 'mode,fan_on,heater_on,dehumidifier_on,cooler_on,atomizer_on,target_temp,target_humidity',
+      'clientKeys': 'in_comfort_zone,target_weather,condensation_risk,active_mode,sensor_present',
+      'sharedKeys': 'mode,fan_on,heater_on,dehumidifier_on,cooler_on,atomizer_on,target_temp,target_humidity,target_weather',
     });
     final builder = MqttClientPayloadBuilder();
     builder.addString(payload);
@@ -238,7 +238,7 @@ class MqttService {
       if (data is Map) {
         final keys = data.keys.map((k) => k.toString()).toList();
         
-        if (keys.contains('weather') || keys.contains('condensation_risk')) {
+        if (keys.contains('in_comfort_zone') || keys.contains('condensation_risk')) {
           cabinetData.updateTelemetryStatus(payload);
         } else if (keys.contains('mode') || keys.contains('active_mode')) {
           cabinetData.updateMode(payload);

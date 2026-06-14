@@ -181,8 +181,12 @@ class ThingsBoardService {
           // dewPoint 是根据 temperature 和 humidity 计算得出的 getter，不可赋值
           debugPrint('   遥测 dew_point: ${_parseDouble(latestValue)}°C (内部计算: ${cabinetData.dewPoint.toStringAsFixed(1)}°C)');
           break;
-        case 'weather':
-          cabinetData.weather = (latestValue?.toString() ?? 'CLEAR').toUpperCase();
+        case 'in_comfort_zone':
+          cabinetData.inComfortZone = _parseBool(latestValue);
+          updated = true;
+          break;
+        case 'target_weather':
+          cabinetData.targetWeather = (latestValue?.toString() ?? 'CLEAR').toUpperCase();
           updated = true;
           break;
         case 'condensation_risk':
@@ -226,14 +230,14 @@ class ThingsBoardService {
 
   /// CLIENT_SCOPE属性：ESP32通过MQTT上报的设备状态（只读）
   static const List<String> _clientAttributeKeys = [
-    'weather', 'condensation_risk', 'active_mode', 'sensor_present',
+    'in_comfort_zone', 'target_weather', 'condensation_risk', 'active_mode', 'sensor_present',
     'fan_on', 'heater_on', 'dehumidifier_on', 'cooler_on', 'atomizer_on',
   ];
 
   /// SHARED_SCOPE属性：APP下发的控制命令（可读写，ESP32可订阅接收）
   static const List<String> _sharedAttributeKeys = [
     'fan_on', 'heater_on', 'dehumidifier_on', 'cooler_on', 'atomizer_on',
-    'mode', 'target_temp', 'target_humidity',
+    'mode', 'target_temp', 'target_humidity', 'target_weather',
   ];
 
   Future<void> _fetchClientAttributes() async {
@@ -302,8 +306,12 @@ class ThingsBoardService {
       final value = item['value'];
 
       switch (key) {
-        case 'weather':
-          cabinetData.weather = (value?.toString() ?? 'CLEAR').toUpperCase();
+        case 'in_comfort_zone':
+          cabinetData.inComfortZone = _parseBool(value);
+          updated = true;
+          break;
+        case 'target_weather':
+          cabinetData.targetWeather = (value?.toString() ?? 'CLEAR').toUpperCase();
           updated = true;
           break;
         case 'condensation_risk':
@@ -385,6 +393,10 @@ class ThingsBoardService {
           break;
         case 'target_humidity':
           cabinetData.targetHumidity = _parseDouble(value);
+          updated = true;
+          break;
+        case 'target_weather':
+          cabinetData.targetWeather = (value?.toString() ?? 'CLEAR').toUpperCase();
           updated = true;
           break;
       }

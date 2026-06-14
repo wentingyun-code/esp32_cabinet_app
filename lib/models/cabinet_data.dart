@@ -3,28 +3,36 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 class AlertConfig {
-  double highHumidityThreshold;
+  double lowTempThreshold;
   double highTempThreshold;
+  double lowHumidityThreshold;
+  double highHumidityThreshold;
   double maxHumidityThreshold;
   double dewPointDiffThreshold;
 
   AlertConfig({
-    this.highHumidityThreshold = 80.0,
-    this.highTempThreshold = 50.0,
+    this.lowTempThreshold = 18.0,
+    this.highTempThreshold = 40.0,
+    this.lowHumidityThreshold = 62.0,
+    this.highHumidityThreshold = 70.0,
     this.maxHumidityThreshold = 90.0,
     this.dewPointDiffThreshold = 3.0,
   });
 
   Map<String, dynamic> toJson() => {
-        'highHumidityThreshold': highHumidityThreshold,
+        'lowTempThreshold': lowTempThreshold,
         'highTempThreshold': highTempThreshold,
+        'lowHumidityThreshold': lowHumidityThreshold,
+        'highHumidityThreshold': highHumidityThreshold,
         'maxHumidityThreshold': maxHumidityThreshold,
         'dewPointDiffThreshold': dewPointDiffThreshold,
       };
 
   factory AlertConfig.fromJson(Map<String, dynamic> json) => AlertConfig(
-        highHumidityThreshold: (json['highHumidityThreshold'] ?? 80.0).toDouble(),
-        highTempThreshold: (json['highTempThreshold'] ?? 50.0).toDouble(),
+        lowTempThreshold: (json['lowTempThreshold'] ?? 18.0).toDouble(),
+        highTempThreshold: (json['highTempThreshold'] ?? 40.0).toDouble(),
+        lowHumidityThreshold: (json['lowHumidityThreshold'] ?? 62.0).toDouble(),
+        highHumidityThreshold: (json['highHumidityThreshold'] ?? 70.0).toDouble(),
         maxHumidityThreshold: (json['maxHumidityThreshold'] ?? 90.0).toDouble(),
         dewPointDiffThreshold: (json['dewPointDiffThreshold'] ?? 3.0).toDouble(),
       );
@@ -121,7 +129,8 @@ class CabinetData extends ChangeNotifier {
   double outdoorTemperature = 0.0;
   double outdoorHumidity = 0.0;
   double outdoorPressure = 1013.25;
-  String weather = 'CLEAR';
+  String targetWeather = 'CLEAR';
+  bool inComfortZone = false;
   String condensationRisk = 'SAFE';
   String requestedMode = 'AUTO';
   String activeMode = 'COMFORT';
@@ -182,11 +191,17 @@ class CabinetData extends ChangeNotifier {
       alertType = 'dew';
       alertMessage = '高结露风险！湿度 ${humidity.toStringAsFixed(1)}%，温度 ${temperature.toStringAsFixed(1)}°C，露点 ${dp.toStringAsFixed(1)}°C';
     } else if (temperature > alertConfig.highTempThreshold) {
-      alertType = 'device';
-      alertMessage = '设备温度过高！当前温度 ${temperature.toStringAsFixed(1)}°C，超过阈值 ${alertConfig.highTempThreshold}°C';
-    } else if (humidity > alertConfig.maxHumidityThreshold) {
-      alertType = 'device';
-      alertMessage = '湿度过高！当前湿度 ${humidity.toStringAsFixed(1)}%，超过阈值 ${alertConfig.maxHumidityThreshold}%';
+      alertType = 'temp_high';
+      alertMessage = '温度过高！当前 ${temperature.toStringAsFixed(1)}°C，超过上限 ${alertConfig.highTempThreshold}°C';
+    } else if (temperature < alertConfig.lowTempThreshold) {
+      alertType = 'temp_low';
+      alertMessage = '温度过低！当前 ${temperature.toStringAsFixed(1)}°C，低于下限 ${alertConfig.lowTempThreshold}°C';
+    } else if (humidity > alertConfig.highHumidityThreshold) {
+      alertType = 'humidity_high';
+      alertMessage = '湿度过高！当前 ${humidity.toStringAsFixed(1)}%，超过上限 ${alertConfig.highHumidityThreshold}%';
+    } else if (humidity < alertConfig.lowHumidityThreshold) {
+      alertType = 'humidity_low';
+      alertMessage = '湿度过低！当前 ${humidity.toStringAsFixed(1)}%，低于下限 ${alertConfig.lowHumidityThreshold}%';
     } else if (tempDiff < alertConfig.dewPointDiffThreshold && humidity > 70) {
       alertType = 'dew';
       alertMessage = '结露风险！温度与露点差值 ${tempDiff.toStringAsFixed(1)}°C，湿度 ${humidity.toStringAsFixed(1)}%';
@@ -321,9 +336,13 @@ class CabinetData extends ChangeNotifier {
       debugPrint('   原始数据: $data');
 
       if (data.isNotEmpty) {
-        if (data.containsKey('weather')) {
-          weather = (data['weather']?.toString() ?? 'CLEAR').toUpperCase();
-          debugPrint('   天气模式: $weather');
+        if (data.containsKey('target_weather')) {
+          targetWeather = (data['target_weather']?.toString() ?? 'CLEAR').toUpperCase();
+          debugPrint('   目标天气: $targetWeather');
+        }
+        if (data.containsKey('in_comfort_zone')) {
+          inComfortZone = _parseBool(data['in_comfort_zone']);
+          debugPrint('   舒适区: ${inComfortZone ? "是" : "否"}');
         }
         if (data.containsKey('condensation_risk')) {
           condensationRisk = (data['condensation_risk']?.toString() ?? 'SAFE').toUpperCase();
@@ -388,7 +407,7 @@ class CabinetData extends ChangeNotifier {
       if (data.isNotEmpty) {
         if (data.containsKey('temperature') || data.containsKey('temp')) {
           updateTelemetryMetrics(payload);
-        } else if (data.containsKey('weather') || data.containsKey('condensation_risk')) {
+        } else if (data.containsKey('in_comfort_zone') || data.containsKey('condensation_risk')) {
           updateTelemetryStatus(payload);
         } else {
           double newTemp = temperature;
@@ -444,11 +463,6 @@ class CabinetData extends ChangeNotifier {
     return str == 'true' || str == '1';
   }
 
-  void updateWeather(String payload) {
-    weather = payload;
-    notifyListeners();
-  }
-
   void updateMode(String payload) {
     try {
       final data = _parsePayload(payload);
@@ -489,7 +503,7 @@ class CabinetData extends ChangeNotifier {
       outdoorTemperature: outdoorTemperature,
       outdoorHumidity: outdoorHumidity,
       outdoorPressure: outdoorPressure,
-      weather: weather,
+      weather: targetWeather,
       condensationRisk: condensationRisk,
       mode: requestedMode,
       activeMode: activeMode,
